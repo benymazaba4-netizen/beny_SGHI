@@ -1,0 +1,45 @@
+name: CD Staging
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install backend deps
+        run: pip install -r requirements.txt
+
+      - name: Run migrations check
+        env:
+          DB_ENGINE: sqlite
+        run: python manage.py migrate --noinput
+
+      - name: Load referentials
+        env:
+          DB_ENGINE: sqlite
+        run: python manage.py load_cim10
+
+      - name: Run tests
+        env:
+          DB_ENGINE: sqlite
+        run: pytest -q
+
+      - name: Build frontend
+        working-directory: frontend-web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Docker build
+        run: docker build -t sghi-erp:staging .

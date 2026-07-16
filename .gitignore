@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+venv/
+.env
+db.sqlite3
+staticfiles/
+media/uploads/
+emails/outbox/
+.pytest_cache/
+.cache/
+.coverage
+htmlcov/
+
+# Node / Vue
+frontend-web/node_modules/
+frontend-web/dist/
+frontend-web/.env
+frontend-web/.env.local
+
+# Flutter
+mobile-patient/.dart_tool/
+mobile-patient/build/
+mobile-patient/.flutter-plugins
+mobile-patient/.flutter-plugins-dependencies
+mobile-patient/.packages
+mobile-patient/pubspec.lock
+mobile-patient/android/app/google-services.json
+mobile-patient/ios/Runner/GoogleService-Info.plist
+mobile-patient/lib/firebase_options.dart.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

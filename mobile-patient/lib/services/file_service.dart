@@ -1,0 +1,13 @@
+import 'dart:io';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+
+class FileService {
+  static Future<void> openPdf(List<int> bytes, String filename) async {
+    final dir = await getTemporaryDirectory();
+    final safeName = filename.replaceAll(RegExp(r'[^\w\-.]'), '_');
+    final file = File('${dir.path}/$safeName');
+    await file.writeAsBytes(bytes);
+    await OpenFilex.open(file.path);
+  }
+}
