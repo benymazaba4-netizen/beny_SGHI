@@ -1,5 +1,6 @@
 import axios from 'axios'
 
+// En prod : .env.production ou variable VITE_API_URL sur Render (build time)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/v1'
 
 const apiClient = axios.create({
@@ -7,7 +8,10 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000,
 })
+
+export { API_BASE_URL }
 
 // Interceptor requête : injecter le token
 apiClient.interceptors.request.use((config) => {

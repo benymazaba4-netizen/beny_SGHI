@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import apiClient from '../api/client'
+import apiClient, { API_BASE_URL } from '../api/client'
 import { getRolePath } from '../config/roles'
 
 export const useAuthStore = defineStore('auth', {
@@ -64,7 +64,7 @@ export const useAuthStore = defineStore('auth', {
         if (error.response) {
           message = error.response.data?.error || error.response.data?.detail || `Erreur ${error.response.status}`
         } else if (error.request) {
-          message = 'Impossible de contacter le serveur. Vérifiez que Django tourne sur http://127.0.0.1:8000'
+          message = `Impossible de contacter le serveur API (${API_BASE_URL}). Vérifiez votre connexion ou que l'API est en ligne.`
         }
         return { success: false, error: message }
       }
