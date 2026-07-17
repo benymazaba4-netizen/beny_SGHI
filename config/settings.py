@@ -308,7 +308,7 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', '')
 EMAIL_TIMEOUT = int(env('EMAIL_TIMEOUT', '30'))
 DEFAULT_FROM_EMAIL = env(
     'DEFAULT_FROM_EMAIL',
-    'SGHI ERP <benymazaba4@gmail.com>',
+    'Django_SGHI <benymazaba4@gmail.com>',
 )
 
 # Envoi réel (Gmail, etc.) — activé si identifiants SMTP renseignés ou forcé dans .env
@@ -329,6 +329,13 @@ STAFF_OTP_EMAIL = env('STAFF_OTP_EMAIL', '')  # legacy, non utilisé pour l'envo
 OTP_EXPIRY_SECONDS = int(env('OTP_EXPIRY_SECONDS', '600'))
 OTP_MAX_RESENDS = int(env('OTP_MAX_RESENDS', '3'))
 OTP_DEV_BYPASS_CODE = env('OTP_DEV_BYPASS_CODE', '123456')
+# True sur Render Free : autorise le code OTP_DEV_BYPASS_CODE (SMTP bloque)
+OTP_ALLOW_BYPASS = env('OTP_ALLOW_BYPASS', 'False').lower() in ('true', '1', 'yes')
+
+# Brevo (Sendinblue) — envoi HTTPS, compatible Render Free (SMTP bloque)
+BREVO_API_KEY = env('BREVO_API_KEY', '')
+BREVO_SENDER_EMAIL = env('BREVO_SENDER_EMAIL', '')
+BREVO_SENDER_NAME = env('BREVO_SENDER_NAME', 'SGHI ERP')
 
 RDV_REMINDER_HOURS = int(env('RDV_REMINDER_HOURS', '24'))
 RDV_REMINDER_WINDOW_HOURS = int(env('RDV_REMINDER_WINDOW_HOURS', '1'))

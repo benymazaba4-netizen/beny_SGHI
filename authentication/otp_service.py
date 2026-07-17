@@ -6,7 +6,6 @@ import uuid
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.core.validators import EmailValidator
 
 logger = logging.getLogger(__name__)
@@ -114,8 +113,17 @@ def resend_login_otp(session_id: str, *, request=None) -> tuple[str | None, str 
     return session_id, mask_email(user.email), None
 
 
+def _otp_bypass_allowed() -> bool:
+    return bool(
+        getattr(settings, 'DEBUG', False)
+        or getattr(settings, 'OTP_ALLOW_BYPASS', False)
+    )
+
+
 def _send_otp_email(user, code: str, session_id: str, ttl: int, *, is_resend=False) -> str | None:
-    """Envoie l'OTP via send_mail à user.email. Retourne un message d'erreur ou None."""
+    """Envoie l'OTP via Brevo (HTTPS) ou SMTP. Retourne un message d'erreur ou None."""
+    from common.http_email import send_outbound_email
+
     recipient = resolve_user_email(user)
     if not recipient:
         return OTP_EMAIL_ERROR
@@ -128,12 +136,11 @@ def _send_otp_email(user, code: str, session_id: str, ttl: int, *, is_resend=Fal
     from_email = settings.EMAIL_HOST_USER or settings.DEFAULT_FROM_EMAIL
 
     try:
-        send_mail(
+        send_outbound_email(
+            to=recipient,
             subject=subject,
-            message=message,
+            text=message,
             from_email=from_email,
-            recipient_list=[recipient],
-            fail_silently=False,
         )
         logger.info("OTP envoye a %s pour le compte %s", recipient, user.username)
         return None
@@ -144,9 +151,11 @@ def _send_otp_email(user, code: str, session_id: str, ttl: int, *, is_resend=Fal
             settings.EMAIL_HOST in ('127.0.0.1', 'localhost', 'mailpit')
             or not getattr(settings, 'EMAIL_USE_REAL_SMTP', False)
         )
-        if getattr(settings, 'DEBUG', False) and use_local_smtp:
+        if _otp_bypass_allowed() and (
+            use_local_smtp or getattr(settings, 'OTP_ALLOW_BYPASS', False)
+        ):
             logger.warning(
-                "OTP dev (SMTP local) — compte %s, code %s, destinataire %s",
+                "OTP fallback — compte %s, code %s, destinataire %s (bypass autorise)",
                 user.username,
                 code,
                 recipient,
@@ -157,7 +166,8 @@ def _send_otp_email(user, code: str, session_id: str, ttl: int, *, is_resend=Fal
         cache.delete(f"otp_user_{user.id}")
         return (
             "Impossible d'envoyer le code OTP par e-mail. "
-            "Vérifiez la configuration SMTP dans .env"
+            "Configurez BREVO_API_KEY (recommandé sur Render Free) "
+            "ou un SMTP accessible."
         )
 
 
@@ -178,12 +188,12 @@ def verify_login_otp(session_id: str, code: str) -> tuple[int | None, str | None
 
     submitted = (code or '').strip().replace(' ', '')
     dev_code = getattr(settings, 'OTP_DEV_BYPASS_CODE', '123456')
-    if getattr(settings, 'DEBUG', False) and submitted == dev_code:
+    if _otp_bypass_allowed() and submitted == dev_code:
         user_id = data.get('user_id')
         cache.delete(key)
         if user_id:
             cache.delete(f"otp_user_{user_id}")
-        logger.warning("OTP dev bypass accepte pour user_id=%s", user_id)
+        logger.warning("OTP bypass accepte pour user_id=%s", user_id)
         return user_id, None
 
     if submitted != data.get('code'):

@@ -46,12 +46,26 @@ services:
         value: "False"
       - key: SEED_DEMO
         value: "True"
+      # Render Free BLOQUE SMTP — utiliser Brevo (HTTPS).
+      # Dashboard : BREVO_API_KEY + BREVO_SENDER_EMAIL (expéditeur vérifié dans Brevo)
       - key: EMAIL_BACKEND
         value: "django.core.mail.backends.console.EmailBackend"
+      - key: EMAIL_USE_REAL_SMTP
+        value: "False"
+      - key: DEFAULT_FROM_EMAIL
+        value: "Django_SGHI <benymazaba4@gmail.com>"
       - key: EMAIL_OTP_ENABLED
         value: "True"
+      - key: OTP_ALLOW_BYPASS
+        value: "False"
       - key: OTP_DEV_BYPASS_CODE
         value: "123456"
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        value: "benymazaba4@gmail.com"
+      - key: BREVO_SENDER_NAME
+        value: "SGHI ERP"
       - key: WEB_CONCURRENCY
         value: "1"
       - key: DB_SSL_REQUIRE

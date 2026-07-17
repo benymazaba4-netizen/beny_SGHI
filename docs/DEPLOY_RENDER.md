@@ -42,10 +42,57 @@ Déjà prévues dans `render.yaml`. À ajuster après coup :
 | Variable | Valeur |
 |----------|--------|
 | `CORS_ALLOWED_ORIGINS` | URL exacte du Flutter web, ex. `https://sghi-patient.onrender.com` |
-| `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` | Gmail App Password (OTP réel) |
-| `EMAIL_BACKEND` | `django.core.mail.backends.smtp.EmailBackend` en prod mail |
+| `EMAIL_HOST_USER` | Compte Gmail expéditeur (ex. `benymazaba4@gmail.com`) |
+| `EMAIL_HOST_PASSWORD` | Mot de passe d’application Gmail (16 caractères) — **secret Render** |
+| `EMAIL_BACKEND` | `django.core.mail.backends.smtp.EmailBackend` |
+| `EMAIL_USE_REAL_SMTP` | `True` |
 | `SEED_DEMO` | `True` au 1er lancement, puis `False` |
-| `OTP_DEV_BYPASS_CODE` | Laisser pour démo ; retirer en prod réelle |
+| `OTP_DEV_BYPASS_CODE` | Inutile si `DEBUG=False` ; retirer en prod réelle |
+
+### OTP e-mail qui échoue sur Render (cause réelle)
+
+**Render Free bloque les ports SMTP `25`, `465` et `587`.**  
+Gmail SMTP ne peut donc **pas** fonctionner, même avec un mot de passe d’application correct.
+
+#### Option A — Démo immédiate (bypass OTP)
+
+Sur **`sghi-api`** → Environment :
+
+```
+OTP_ALLOW_BYPASS=True
+OTP_DEV_BYPASS_CODE=123456
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+```
+
+Puis à la connexion, saisir le code **`123456`**.
+
+#### Option B — Vrais e-mails sur Free (Brevo HTTPS) — **recommandé**
+
+1. Créer un compte gratuit [Brevo](https://app.brevo.com)
+2. **SMTP & API** → **API keys** → Create a new API key (copier la clé `xkeysib-…`)
+3. **Senders** → Add a sender → `benymazaba4@gmail.com` → valider le lien reçu par e-mail
+4. Sur Render → **`sghi-api`** → Environment :
+
+```
+BREVO_API_KEY=xkeysib-xxxxxxxx
+BREVO_SENDER_EMAIL=benymazaba4@gmail.com
+BREVO_SENDER_NAME=SGHI ERP
+OTP_ALLOW_BYPASS=False
+```
+
+5. **Save** → redéploiement / redémarrage
+6. Tester la connexion : l’OTP arrive dans la boîte du compte utilisateur
+
+En local (optionnel) : ajouter les mêmes variables dans `.env`, puis :
+
+```
+python manage.py check_email
+python manage.py test_email --to benymazaba4@gmail.com
+```
+
+#### Option C — Plan payant Render
+
+Un instance type payant débloque SMTP → Gmail classique possible.
 
 Compte démo (si `SEED_DEMO=True`) : `patient` / `Demo2026!`
 
@@ -104,7 +151,13 @@ SECURE_SSL_REDIRECT=True
 SESSION_COOKIE_SECURE=True
 CSRF_COOKIE_SECURE=True
 SEED_DEMO=True
-EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=<gmail>
+EMAIL_HOST_PASSWORD=<app password>
+EMAIL_USE_REAL_SMTP=True
 ```
 
 ---

@@ -1,9 +1,8 @@
-"""Notifications email SGHI (SMTP configurable via .env)."""
+"""Notifications email SGHI (Brevo HTTPS ou SMTP via .env)."""
 import logging
 import uuid
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives, send_mail
 from django.utils import timezone
 
 from .email_templates import render_email_html
@@ -66,24 +65,15 @@ def send_notification(
     )
 
     try:
-        if html_message:
-            msg = EmailMultiAlternatives(
-                full_subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [to_email],
-                reply_to=[settings.EMAIL_HOST_USER] if settings.EMAIL_HOST_USER else None,
-            )
-            msg.attach_alternative(html_message, 'text/html')
-            msg.send(fail_silently=False)
-        else:
-            send_mail(
-                full_subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [to_email],
-                fail_silently=False,
-            )
+        from common.http_email import send_outbound_email
+
+        send_outbound_email(
+            to=to_email,
+            subject=full_subject,
+            text=message,
+            html=html_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+        )
         
         email_log.marquer_envoye()
         logger.info("Email envoye avec succes — %s → %s (uuid: %s)", email_type, to_email, msg_uuid)
