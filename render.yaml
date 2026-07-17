@@ -56,3 +56,17 @@ services:
         value: "1"
       - key: DB_SSL_REQUIRE
         value: "True"
+
+  # Portail patient Flutter Web (fichiers pré-buildés dans mobile-patient/build/web)
+  - type: web
+    name: sghi-patient
+    runtime: static
+    plan: free
+    branch: master
+    rootDir: mobile-patient
+    buildCommand: echo "Flutter web prebuilt"
+    staticPublishPath: build/web
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

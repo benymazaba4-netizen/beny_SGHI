@@ -5,6 +5,8 @@ __pycache__/
 .eggs/
 dist/
 build/
+!mobile-patient/build/web/
+!mobile-patient/build/web/**
 venv/
 .env
 db.sqlite3
@@ -25,6 +27,9 @@ frontend-web/.env.local
 # Flutter
 mobile-patient/.dart_tool/
 mobile-patient/build/
+# Exception : bundle web pré-buildé pour Render Static Site
+!mobile-patient/build/web/
+!mobile-patient/build/web/**
 mobile-patient/.flutter-plugins
 mobile-patient/.flutter-plugins-dependencies
 mobile-patient/.packages
