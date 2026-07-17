@@ -1,8 +1,5 @@
 # Blueprint Render — SGHI ERP Médical (API + PostgreSQL)
 # Dashboard : https://dashboard.render.com → New → Blueprint → ce dépôt
-#
-# Flutter Web : déployer ensuite en Static Site (voir docs/DEPLOY_RENDER.md)
-#   flutter build web --release --dart-define=API_BASE_URL=https://sghi-api.onrender.com/api/v1
 
 databases:
   - name: sghi-db
@@ -17,8 +14,9 @@ services:
     plan: free
     region: frankfurt
     branch: master
-    buildCommand: chmod +x build.sh start.sh && ./build.sh
-    startCommand: ./start.sh
+    # Commandes inline (évite les problèmes CRLF des .sh sous Windows)
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: python manage.py migrate --noinput && python manage.py seed_demo_users; gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120
     healthCheckPath: /api/v1/docs
     envVars:
       - key: PYTHON_VERSION
@@ -36,16 +34,14 @@ services:
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
       - key: CORS_ALLOWED_ORIGINS
-        # Mettre l’URL exacte du Static Site Flutter après création
         value: "https://sghi-patient.onrender.com"
+      # False : Render gère déjà le HTTPS (évite l’échec du health check)
       - key: SECURE_SSL_REDIRECT
-        value: "True"
+        value: "False"
       - key: SESSION_COOKIE_SECURE
         value: "True"
       - key: CSRF_COOKIE_SECURE
         value: "True"
-      - key: SECURE_HSTS_SECONDS
-        value: "31536000"
       - key: DJANGO_ADMIN_ENABLED
         value: "False"
       - key: SEED_DEMO
@@ -57,4 +53,6 @@ services:
       - key: OTP_DEV_BYPASS_CODE
         value: "123456"
       - key: WEB_CONCURRENCY
-        value: "2"
+        value: "1"
+      - key: DB_SSL_REQUIRE
+        value: "True"

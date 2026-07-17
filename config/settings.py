@@ -121,13 +121,23 @@ _database_url = (env('DATABASE_URL') or '').strip()
 if _database_url:
     import dj_database_url
 
-    DATABASES = {
-        'default': dj_database_url.config(
+    _ssl = env('DB_SSL_REQUIRE', 'True').lower() in ('true', '1', 'yes')
+    try:
+        _db_cfg = dj_database_url.config(
             default=_database_url,
             conn_max_age=int(env('DB_CONN_MAX_AGE', '60')),
-            ssl_require=env('DB_SSL_REQUIRE', 'True').lower() in ('true', '1', 'yes'),
+            ssl_require=_ssl,
         )
-    }
+    except TypeError:
+        # Anciennes/nouvelles versions de dj-database-url
+        _db_cfg = dj_database_url.config(
+            default=_database_url,
+            conn_max_age=int(env('DB_CONN_MAX_AGE', '60')),
+        )
+        if _ssl:
+            _db_cfg.setdefault('OPTIONS', {})
+            _db_cfg['OPTIONS']['sslmode'] = 'require'
+    DATABASES = {'default': _db_cfg}
 else:
     # Dev local : SQLite (DB_ENGINE=sqlite ou DB_HOST absent).
     # Production hors Render : PostgreSQL (DB_ENGINE=postgresql + DB_HOST défini).
