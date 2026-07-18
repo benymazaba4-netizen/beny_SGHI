@@ -11,6 +11,7 @@ export const useAuthStore = defineStore('auth', {
     otpSession: sessionStorage.getItem('otp_session') || null,
     otpEmailHint: sessionStorage.getItem('otp_email_hint') || null,
     otpUsername: sessionStorage.getItem('otp_username') || null,
+    demoOtpCode: sessionStorage.getItem('demo_otp_code') || null,
   }),
 
   actions: {
@@ -22,10 +23,12 @@ export const useAuthStore = defineStore('auth', {
       this.otpSession = null
       this.otpEmailHint = null
       this.otpUsername = null
+      this.demoOtpCode = null
       sessionStorage.removeItem('mfa_session')
       sessionStorage.removeItem('otp_session')
       sessionStorage.removeItem('otp_email_hint')
       sessionStorage.removeItem('otp_username')
+      sessionStorage.removeItem('demo_otp_code')
       localStorage.setItem('token', token)
       if (refreshToken) localStorage.setItem('refresh_token', refreshToken)
       localStorage.setItem('user', JSON.stringify(user))
@@ -46,13 +49,20 @@ export const useAuthStore = defineStore('auth', {
           this.otpSession = data.otp_session
           this.otpEmailHint = data.otp_email_hint
           this.otpUsername = username
+          this.demoOtpCode = data.demo_otp_code || null
           sessionStorage.setItem('otp_session', data.otp_session || '')
           sessionStorage.setItem('otp_email_hint', data.otp_email_hint || '')
           sessionStorage.setItem('otp_username', username)
+          if (data.demo_otp_code) {
+            sessionStorage.setItem('demo_otp_code', data.demo_otp_code)
+          } else {
+            sessionStorage.removeItem('demo_otp_code')
+          }
           return {
             success: true,
             otpRequired: true,
             emailHint: data.otp_email_hint,
+            demoOtpCode: data.demo_otp_code,
             username: data.user?.username,
           }
         }
@@ -122,7 +132,17 @@ export const useAuthStore = defineStore('auth', {
           this.otpEmailHint = data.otp_email_hint
           sessionStorage.setItem('otp_email_hint', data.otp_email_hint)
         }
-        return { success: true, emailHint: data.otp_email_hint }
+        this.demoOtpCode = data.demo_otp_code || null
+        if (data.demo_otp_code) {
+          sessionStorage.setItem('demo_otp_code', data.demo_otp_code)
+        } else {
+          sessionStorage.removeItem('demo_otp_code')
+        }
+        return {
+          success: true,
+          emailHint: data.otp_email_hint,
+          demoOtpCode: data.demo_otp_code,
+        }
       } catch (error) {
         return { success: false, error: error.response?.data?.error || 'Impossible de renvoyer le code' }
       }
@@ -144,10 +164,12 @@ export const useAuthStore = defineStore('auth', {
       this.otpSession = null
       this.otpEmailHint = null
       this.otpUsername = null
+      this.demoOtpCode = null
       sessionStorage.removeItem('mfa_session')
       sessionStorage.removeItem('otp_session')
       sessionStorage.removeItem('otp_email_hint')
       sessionStorage.removeItem('otp_username')
+      sessionStorage.removeItem('demo_otp_code')
       localStorage.removeItem('token')
       localStorage.removeItem('refresh_token')
       localStorage.removeItem('user')

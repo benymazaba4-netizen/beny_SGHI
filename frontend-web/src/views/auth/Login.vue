@@ -59,6 +59,17 @@
     </form>
 
     <form v-else @submit.prevent="handleOtp" class="ig-stack">
+      <div
+        v-if="demoOtpCode"
+        role="alert"
+        class="p-4 rounded-xl border border-sky-200 bg-sky-50 text-sky-900 text-center"
+      >
+        <p class="text-xs font-bold uppercase tracking-wide">Mode démo</p>
+        <p class="mt-1 text-sm">
+          Votre code OTP est :
+          <strong class="ml-1 font-mono text-xl tracking-[0.2em]">{{ demoOtpCode }}</strong>
+        </p>
+      </div>
       <div class="text-center mb-2">
         <img src="/illustrations/icon-shield.svg" alt="" class="w-12 h-12 mx-auto mb-3 opacity-80" />
         <p class="text-sm text-slate-600">
@@ -135,6 +146,7 @@ const otpCode = ref('')
 const mfaStep = ref(false)
 const otpStep = ref(false)
 const otpEmailHint = ref('')
+const demoOtpCode = ref(authStore.demoOtpCode || '')
 const loading = ref(false)
 const resendLoading = ref(false)
 const resendCooldown = ref(0)
@@ -180,6 +192,7 @@ const handleLogin = async () => {
   } else if (result.success && result.otpRequired) {
     otpStep.value = true
     otpEmailHint.value = result.emailHint || ''
+    demoOtpCode.value = result.demoOtpCode || ''
   } else if (result.success) {
     afterLogin()
   } else {
@@ -206,6 +219,7 @@ const handleResendOtp = async () => {
   const result = await authStore.resendOtp()
   if (result.success) {
     otpEmailHint.value = result.emailHint || otpEmailHint.value
+    demoOtpCode.value = result.demoOtpCode || ''
     resendCooldown.value = 60
     resendTimer = setInterval(() => {
       resendCooldown.value -= 1

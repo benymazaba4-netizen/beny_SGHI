@@ -34,6 +34,7 @@ class LoginResponse(Schema):
     otp_required: bool = False
     otp_session: str | None = None
     otp_email_hint: str | None = None
+    demo_otp_code: str | None = None
 
 
 class MFALoginSchema(Schema):
@@ -179,6 +180,7 @@ def login(request, payload: LoginSchema):
             "otp_required": True,
             "otp_session": session_id,
             "otp_email_hint": email_hint,
+            "demo_otp_code": otp_service.get_demo_otp(session_id),
             "user": {"username": user.username, "role": user.role, "email": user.email},
         }
 
@@ -258,6 +260,7 @@ def resend_login_otp(request, payload: ResendOTPSchema):
         "otp_required": True,
         "otp_session": session_id,
         "otp_email_hint": email_hint,
+        "demo_otp_code": otp_service.get_demo_otp(session_id),
     }
 
 

@@ -104,6 +104,38 @@ def test_login_patient_otp_sent_to_personal_email(api_client):
 
 
 @pytest.mark.django_db
+@override_settings(**OTP_SETTINGS, OTP_ALLOW_BYPASS=True, DEBUG=False)
+def test_demo_mode_exposes_otp_without_sending_email(api_client):
+    User.objects.create_user(
+        username='jury_demo',
+        password='TestPass123!',
+        role='PATIENT',
+        email='jury@example.com',
+    )
+
+    response = api_client.post(
+        '/api/v1/auth/login',
+        data={'username': 'jury_demo', 'password': 'TestPass123!'},
+        content_type='application/json',
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data['otp_required'] is True
+    assert data['demo_otp_code'].isdigit()
+    assert len(data['demo_otp_code']) == 6
+    assert len(mail.outbox) == 0
+
+    otp_response = api_client.post(
+        '/api/v1/auth/verify-otp',
+        data={'username': 'jury_demo', 'otp_code': data['demo_otp_code']},
+        content_type='application/json',
+    )
+    assert otp_response.status_code == 200
+    assert otp_response.json()['token']
+
+
+@pytest.mark.django_db
 @override_settings(**OTP_SETTINGS, DEBUG=True)
 def test_verify_otp_with_username(api_client):
     User.objects.create_user(

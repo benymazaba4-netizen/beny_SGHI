@@ -37,6 +37,14 @@ def mask_email(email: str) -> str:
     return f"{masked_local}@{domain}"
 
 
+def get_demo_otp(session_id: str | None) -> str | None:
+    """Expose le code uniquement lorsque le mode démo est explicitement activé."""
+    if not session_id or not getattr(settings, 'OTP_ALLOW_BYPASS', False):
+        return None
+    data = cache.get(f"otp_login_{session_id}") or {}
+    return data.get('code')
+
+
 def create_login_otp(user, *, request=None) -> tuple[str | None, str | None, str | None]:
     """
     Génère un OTP et l'envoie à user.email.
@@ -127,6 +135,13 @@ def _send_otp_email(user, code: str, session_id: str, ttl: int, *, is_resend=Fal
     recipient = resolve_user_email(user)
     if not recipient:
         return OTP_EMAIL_ERROR
+
+    if getattr(settings, 'OTP_ALLOW_BYPASS', False):
+        logger.warning(
+            "MODE DEMO — OTP affiche dans l'interface pour le compte %s",
+            user.username,
+        )
+        return None
 
     subject = "SGHI ERP - Votre code de validation"
     if is_resend:
